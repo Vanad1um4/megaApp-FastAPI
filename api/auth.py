@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from utils.auth import AuthHandler
 
 from schemas import UserLogin
-from crud import db_get_user_id_by_email, db_get_user_hashed_pass_by_email, db_get_a_user_by_email, db_create_user
+from db.user import db_get_user_id_by_email, db_get_a_user_by_email, db_create_user
 
 router = APIRouter()
 
