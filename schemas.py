@@ -7,7 +7,7 @@ class UserLogin(BaseModel):
 
 
 class Currency(BaseModel):
-    name: str
+    title: str
     ticker: str
     symbol: str
     symbol_pos: str
@@ -15,4 +15,12 @@ class Currency(BaseModel):
 
 
 class Bank(BaseModel):
-    name: str
+    title: str
+
+
+class Account(BaseModel):
+    title: str
+    currency_id: int
+    bank_id: int
+    invest: bool
+    kind: str

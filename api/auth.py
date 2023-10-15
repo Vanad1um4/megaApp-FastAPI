@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.responses import JSONResponse
-from utils.auth import AuthHandler
 
+from utils.auth import AuthHandler
 from schemas import UserLogin
 from db.user import db_get_user_id_by_email, db_get_a_user_by_email, db_create_user
 
@@ -43,5 +43,5 @@ def unprotected():
 
 
 @router.get('/test-protected', tags=['Auth'])
-def protected(email=Depends(auth_handler.auth_wrapper)):
-    return {'email': email}
+def protected(user_id=Depends(auth_handler.auth_wrapper)):
+    return {'user_id': user_id}

@@ -3,7 +3,9 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
+
 from env import PASS_SECRET
+from db.user import db_get_user_id_by_email
 
 
 class AuthHandler():
@@ -35,4 +37,5 @@ class AuthHandler():
             raise HTTPException(status_code=401, detail='Invalid token')
 
     def auth_wrapper(self, auth: HTTPAuthorizationCredentials = Security(security)):
-        return self.decode_token(auth.credentials)
+        user_id = db_get_user_id_by_email(self.decode_token(auth.credentials))
+        return user_id

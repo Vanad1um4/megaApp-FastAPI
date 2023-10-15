@@ -1,4 +1,5 @@
 from psycopg2.extras import DictCursor
+
 from db.db import get_connection
 
 connection = get_connection()
@@ -28,18 +29,6 @@ def db_get_user_id_by_email(user_email):
     except Exception as exc:
         print(exc)
         return False
-
-# def db_get_user_hashed_pass_by_email(user_email):
-#     try:
-#         with connection.cursor(cursor_factory=DictCursor) as cursor:
-#             sql = 'select hashed_password from "user" where email=%s;'
-#             values = (user_email,)
-#             cursor.execute(sql, values)
-#             res = cursor.fetchone()
-#             return res
-#     except Exception as exc:
-#         print(exc)
-#         return False
 
 
 def db_get_a_user_by_email(user_email):
