@@ -24,3 +24,9 @@ class Account(BaseModel):
     bank_id: int
     invest: bool
     kind: str
+
+
+class Category(BaseModel):
+    title: str
+    parent_id: int | None
+    kind: str

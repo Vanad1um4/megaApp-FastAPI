@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from api import auth, bank, currency, account
+from api import auth, bank, currency, account, category
 
 from env import APP_IP, APP_PORT
 
@@ -13,6 +13,7 @@ tags_metadata = [
     {'name': 'Money -> Currency', 'description': 'Маршруты для работы со списком валют.'},
     {'name': 'Money -> Bank', 'description': 'Маршруты для работы со списком банков.'},
     {'name': 'Money -> Account', 'description': 'Маршруты для работы со списком счетов.'},
+    {'name': 'Money -> Category', 'description': 'Маршруты для работы со списком категорий.'},
     {'name': 'Auth', 'description': 'Маршруты для работы с авторизацией.'},
     {'name': 'Site', 'description': 'Отдача приложения на Angular.'},
 ]
@@ -23,6 +24,7 @@ app.include_router(auth.router, prefix='/api/auth')
 app.include_router(currency.router, prefix='/api/money')
 app.include_router(bank.router, prefix='/api/money')
 app.include_router(account.router, prefix='/api/money')
+app.include_router(category.router, prefix='/api/money')
 
 
 @app.get('/', response_class=FileResponse, tags=['Site'])
