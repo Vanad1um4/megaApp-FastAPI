@@ -9,7 +9,10 @@ connection = get_connection()
 def db_get_currency_list_by_userid(user_id: int) -> list[dict[str, int | str | bool]] | None | bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'SELECT id, title, ticker, symbol, symbol_pos, whitespace FROM currency WHERE user_id=%s order by id;'
+            sql = '''SELECT id, title, ticker, symbol, symbol_pos, whitespace 
+                     FROM currency
+                     WHERE user_id=%s
+                     ORDER BY title;'''
             values = (user_id,)
             cursor.execute(sql, values)
             res = cursor.fetchall()
@@ -27,7 +30,8 @@ def db_get_currency_list_by_userid(user_id: int) -> list[dict[str, int | str | b
 def db_add_currency(currency: Currency, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'insert into currency (title, ticker, symbol, symbol_pos, whitespace, user_id) values (%s, %s, %s, %s, %s, %s);'
+            sql = '''INSERT INTO currency (title, ticker, symbol, symbol_pos, whitespace, user_id)
+                     VALUES (%s, %s, %s, %s, %s, %s);'''
             values = (currency.title, currency.ticker, currency.symbol,
                       currency.symbol_pos, currency.whitespace, user_id)
             cursor.execute(sql, values)
@@ -41,9 +45,11 @@ def db_add_currency(currency: Currency, user_id: int) -> bool:
 def db_update_currency(currency: Currency, currency_id: int, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'update currency set title=%s, ticker=%s, symbol=%s, symbol_pos=%s, whitespace=%s where id=%s and user_id=%s;'
-            values = (currency.title, currency.ticker, currency.symbol,
-                      currency.symbol_pos, currency.whitespace, currency_id, user_id)
+            sql = '''UPDATE currency
+                     SET title=%s, ticker=%s, symbol=%s, symbol_pos=%s, whitespace=%s
+                     WHERE id=%s and user_id=%s;'''
+            values = (currency.title, currency.ticker, currency.symbol, currency.symbol_pos, currency.whitespace,
+                      currency_id, user_id)
             cursor.execute(sql, values)
             connection.commit()
             return True
@@ -55,7 +61,8 @@ def db_update_currency(currency: Currency, currency_id: int, user_id: int) -> bo
 def db_delete_currency(currency_id: int, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'delete from currency where id=%s and user_id=%s;'
+            sql = '''DELETE FROM currency
+                     WHERE id=%s and user_id=%s;'''
             values = (currency_id, user_id)
             cursor.execute(sql, values)
             connection.commit()

@@ -28,5 +28,13 @@ class Account(BaseModel):
 
 class Category(BaseModel):
     title: str
-    parent_id: int | None
     kind: str
+
+
+class Transaction(BaseModel):
+    date: str
+    amount: float
+    account_id: int
+    category_id: int
+    kind: str
+    user_id: int

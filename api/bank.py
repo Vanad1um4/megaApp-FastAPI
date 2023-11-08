@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from utils.auth import AuthHandler
+from pprint import pprint
 
 from schemas import Bank
 from db.bank import db_get_bank_list_by_userid, db_add_bank, db_update_bank, db_delete_bank

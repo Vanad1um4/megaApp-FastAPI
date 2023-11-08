@@ -8,7 +8,7 @@ connection = get_connection()
 def db_create_user(user_email, hashed_password):
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'insert into "user" (email, hashed_password) values (%s, %s);'
+            sql = 'INSERT INTO "user" (email, hashed_password) VALUES (%s, %s);'
             values = (user_email, hashed_password)
             cursor.execute(sql, values)
             connection.commit()
@@ -21,7 +21,7 @@ def db_create_user(user_email, hashed_password):
 def db_get_user_id_by_email(user_email):
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'select id from "user" where email=%s;'
+            sql = 'SELECT id FROM "user" WHERE email=%s;'
             values = (user_email,)
             cursor.execute(sql, values)
             res = cursor.fetchone()[0]
@@ -34,7 +34,7 @@ def db_get_user_id_by_email(user_email):
 def db_get_a_user_by_email(user_email):
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = 'select * from "user" where email=%s;'
+            sql = 'SELECT * FROM "user" WHERE email=%s;'
             values = (user_email,)
             cursor.execute(sql, values)
             res = cursor.fetchone()

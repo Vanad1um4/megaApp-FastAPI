@@ -1,19 +1,18 @@
-# from pprint import pprint
 from psycopg2.extras import DictCursor
 
-from schemas import Category
+from schemas import Transaction
 from db.db import get_connection
 
 connection = get_connection()
 
 
-def db_get_category_list_by_user_id(user_id: int) -> list[dict[str, int | str]] | None | bool:
+def db_get_transaction_list_by_user_id(user_id: int) -> list[dict[str, int | str]] | None | bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''SELECT id, title, kind
-                     FROM category
+            sql = '''SELECT id, date, amount, account_id, category_id, kind
+                     FROM transaction
                      WHERE user_id=%s
-                     ORDER BY title;'''
+                     ORDER BY id;'''
             values = (user_id,)
             cursor.execute(sql, values)
             res = cursor.fetchall()
@@ -28,13 +27,13 @@ def db_get_category_list_by_user_id(user_id: int) -> list[dict[str, int | str]] 
         return False
 
 
-def db_add_category(category: Category, user_id: int) -> bool:
-    # pprint(category)
+def db_add_transaction(transaction: Transaction, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''INSERT INTO category (title, kind, user_id)
-                     VALUES (%s, %s, %s);'''
-            values = (category.title, category.kind, user_id)
+            sql = '''INSERT INTO transaction (date, amount, account_id, category_id, kind, user_id)
+                     VALUES (%s, %s, %s, %s, %s, %s);'''
+            values = (transaction.date, transaction.amount, transaction.account_id,
+                      transaction.category_id, transaction.kind, user_id)
             cursor.execute(sql, values)
             connection.commit()
             return True
@@ -43,13 +42,14 @@ def db_add_category(category: Category, user_id: int) -> bool:
         return False
 
 
-def db_update_category(category: Category, category_id: int, user_id: int) -> bool:
+def db_update_transaction(transaction: Transaction, transaction_id: int, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''UPDATE category
-                     SET title=%s, kind=%s
+            sql = '''UPDATE transaction 
+                     SET date=%s, amount=%s, account_id=%s, category_id=%s, kind=%s
                      WHERE id=%s AND user_id=%s;'''
-            values = (category.title, category.kind, category_id, user_id)
+            values = (transaction.date, transaction.amount, transaction.account_id, transaction.category_id, transaction.kind,
+                      transaction_id, user_id)
             cursor.execute(sql, values)
             connection.commit()
             return True
@@ -58,12 +58,12 @@ def db_update_category(category: Category, category_id: int, user_id: int) -> bo
         return False
 
 
-def db_delete_category(category_id: int, user_id: int) -> bool:
+def db_delete_transaction(transaction_id: int, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''DELETE FROM category
+            sql = '''DELETE FROM transaction
                      WHERE id=%s AND user_id=%s;'''
-            values = (category_id, user_id)
+            values = (transaction_id, user_id)
             cursor.execute(sql, values)
             connection.commit()
             return True
