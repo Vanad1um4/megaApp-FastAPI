@@ -12,7 +12,7 @@ auth_handler = AuthHandler()
 @router.get('/category', tags=['Money -> Category'])
 def get_category_list(user_id=Depends(auth_handler.auth_wrapper)):
     res = db_get_category_list_by_user_id(user_id)
-    return {'category_list': res}
+    return {'categories_list': res}
 
 
 @router.post('/category', tags=['Money -> Category'])

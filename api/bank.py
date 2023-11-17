@@ -12,7 +12,7 @@ auth_handler = AuthHandler()
 @router.get('/bank', tags=['Money -> Bank'])
 def get_bank_list(user_id=Depends(auth_handler.auth_wrapper)):
     res = db_get_bank_list_by_userid(user_id)
-    return {'bank_list': res}
+    return {'banks_list': res}
 
 
 @router.post('/bank', tags=['Money -> Bank'])

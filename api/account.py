@@ -12,11 +12,8 @@ auth_handler = AuthHandler()
 
 @router.get('/account', tags=['Money -> Account'])
 def get_account_list(user_id=Depends(auth_handler.auth_wrapper)):
-    bank_list = db_get_bank_list_by_userid(user_id)
-    currency_list = db_get_currency_list_by_userid(user_id)
-    account_list = db_get_account_list_by_userid(user_id)
-    res = {'bank_list': bank_list, 'currency_list': currency_list, 'account_list': account_list}
-    return res
+    res = db_get_account_list_by_userid(user_id)
+    return {'accounts_list': res}
 
 
 @router.post('/account', tags=['Money -> Account'])

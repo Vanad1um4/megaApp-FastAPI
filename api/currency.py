@@ -11,7 +11,7 @@ auth_handler = AuthHandler()
 @router.get('/currency', tags=['Money -> Currency'])
 def get_currency_list(user_id=Depends(auth_handler.auth_wrapper)):
     res = db_get_currency_list_by_userid(user_id)
-    return {'currency_list': res}
+    return {'currencies_list': res}
 
 
 @router.post('/currency', tags=['Money -> Currency'])
