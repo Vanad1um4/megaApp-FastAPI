@@ -37,4 +37,8 @@ class Transaction(BaseModel):
     account_id: int
     category_id: int
     kind: str
-    user_id: int
+    is_gift: bool
+    notes: str | None
+    twin_transaction_id: int | None
+    target_account_id: int | None
+    target_account_amount: int | None

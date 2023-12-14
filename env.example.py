@@ -10,3 +10,5 @@ APP_IP = '127.0.0.1'
 APP_PORT = 8000
 
 PASS_SECRET = 'Secret phrase for password hashing'
+
+TRANSACTIONS_DAYS_AMT = 5  # The amount of days of transactions before and after the specified date to return

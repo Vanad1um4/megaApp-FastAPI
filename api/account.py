@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from pprint import pprint
 
 from utils.auth import AuthHandler
 from schemas import Account
@@ -18,6 +19,7 @@ def get_account_list(user_id=Depends(auth_handler.auth_wrapper)):
 
 @router.post('/account', tags=['Money -> Account'])
 def add_account(account: Account, user_id=Depends(auth_handler.auth_wrapper)):
+    pprint(account)
     res = db_add_account(account, user_id)
     return {'result: ': res}
 
