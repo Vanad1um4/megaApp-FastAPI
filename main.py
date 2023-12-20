@@ -4,12 +4,13 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from api import auth, bank, currency, account, category, transaction
+from api import auth, bank, currency, account, category, transaction, food
 
 from env import APP_IP, APP_PORT
 
 
 tags_metadata = [
+    {'name': 'Food -> Diary', 'description': 'Еда.'},
     {'name': 'Money -> Currency', 'description': 'Маршруты для работы со списком валют.'},
     {'name': 'Money -> Bank', 'description': 'Маршруты для работы со списком банков.'},
     {'name': 'Money -> Account', 'description': 'Маршруты для работы со списком счетов.'},
@@ -22,6 +23,7 @@ tags_metadata = [
 app = FastAPI(title='megaApp', openapi_tags=tags_metadata)
 
 app.include_router(auth.router, prefix='/api/auth')
+app.include_router(food.router, prefix='/api/kcal')
 app.include_router(currency.router, prefix='/api/money')
 app.include_router(bank.router, prefix='/api/money')
 app.include_router(account.router, prefix='/api/money')

@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+# class Stats(BaseModel):
+#     list()
 
 class UserLogin(BaseModel):
     email: str

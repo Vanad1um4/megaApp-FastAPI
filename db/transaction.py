@@ -2,12 +2,12 @@ from psycopg2.extras import DictCursor
 
 from schemas import Transaction
 from db.db import get_connection
-from env import TRANSACTIONS_DAYS_AMT
+from env import FETCH_DAYS_RANGE_OFFSET
 
 connection = get_connection()
 
 
-def db_get_transaction_list_by_user_id(user_id: int, day: str) -> list[dict[str, int | str]] | None | bool:
+def db_get_transaction_list_by_user_id(user_id: int, date_iso: str) -> list[dict[str, int | str]] | None | bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
@@ -16,11 +16,11 @@ def db_get_transaction_list_by_user_id(user_id: int, day: str) -> list[dict[str,
                 FROM 
                     transaction
                 WHERE 
-                    user_id = %s AND
-                    date BETWEEN date %s - %s AND date %s + %s 
+                    user_id = %s
+                    AND date BETWEEN date %s - %s AND date %s + %s 
                 ORDER BY 
                     id;'''
-            values = (user_id, day, TRANSACTIONS_DAYS_AMT, day, TRANSACTIONS_DAYS_AMT)
+            values = (user_id, date_iso, FETCH_DAYS_RANGE_OFFSET, date_iso, FETCH_DAYS_RANGE_OFFSET)
             cursor.execute(sql, values)
             res = cursor.fetchall()
         if res:
