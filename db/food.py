@@ -119,7 +119,7 @@ def db_get_users_cached_stats(user_id: int):
                 SELECT
                     up_to_date, stats
                 FROM
-                    stats
+                    kcal_stats
                 WHERE
                     user_id=%s;'''
             values = (user_id,)
@@ -138,13 +138,13 @@ def db_save_users_stats(date_iso: str, stats: str, user_id: int):
             if not res0:
                 sql = '''
                     INSERT INTO
-                        stats (up_to_date, stats, user_id)
+                        kcal_stats (up_to_date, stats, user_id)
                     VALUES
                         (%s, %s, %s);'''
             else:
                 sql = '''
                     UPDATE
-                        stats
+                        kcal_stats
                     SET
                         up_to_date=%s, stats=%s
                     WHERE
@@ -157,10 +157,60 @@ def db_save_users_stats(date_iso: str, stats: str, user_id: int):
         print(exc)
         return False
 
+
+### BODY WEIGHT ########################################################################################################
+
+def db_get_users_body_weight(date_iso: str, user_id: int) -> tuple[str, list]:
+    try:
+        with connection45.cursor() as cursor:
+            sql = '''
+                SELECT
+                    weight
+                FROM
+                    weights
+                WHERE
+                    users_id=%s
+                    AND date=%s;'''
+            values = (user_id, date_iso)
+            cursor.execute(sql, values)
+            res = cursor.fetchone()
+        return res
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+def db_save_users_body_weight(date_iso: str, weight: float, user_id: int):
+    try:
+        with connection45.cursor() as cursor:
+            res0 = db_get_users_body_weight(date_iso, user_id)
+            if not res0:
+                sql = '''
+                    INSERT INTO
+                        weights (weight, users_id, date)
+                    VALUES
+                        (%s, %s, %s);'''
+            else:
+                sql = '''
+                    UPDATE
+                        weights
+                    SET
+                        weight=%s
+                    WHERE
+                        users_id=%s
+                        AND date=%s;'''
+            values = (weight, user_id, date_iso)
+            cursor.execute(sql, values)
+            connection45.commit()
+            return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
 ########################################################################################################################
 ### OLD FUNCTIONS ######################################################################################################
 ########################################################################################################################
-
 
 def db_get_use_coeffs_bool(user_id):
     try:

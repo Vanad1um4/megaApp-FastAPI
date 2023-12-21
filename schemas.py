@@ -3,10 +3,20 @@ from pydantic import BaseModel
 # class Stats(BaseModel):
 #     list()
 
+
 class UserLogin(BaseModel):
     email: str
     password: str
 
+
+# KCAL #
+
+class BodyWeight(BaseModel):
+    body_weight: float
+    date_iso: str
+
+
+# MONEY #
 
 class Currency(BaseModel):
     title: str

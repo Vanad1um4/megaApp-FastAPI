@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, BackgroundTasks
 from pprint import pprint
 import json
 from datetime import datetime, timedelta
+from time import sleep
 
 from utils.auth import AuthHandler
-from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_get_users_cached_stats
+from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_get_users_cached_stats, db_get_users_body_weight, db_save_users_body_weight
 from utils.food_utils import organize_by_dates_and_ids, list_to_dict_with_ids, get_coefficients, extend_diary, get_date_range, get_cached_stats, stats_recalc, prep_target_kcals
 from env import FETCH_DAYS_RANGE_OFFSET
+from schemas import BodyWeight
 
 router = APIRouter()
 auth_handler = AuthHandler()
@@ -39,7 +41,7 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     weights_dictified = {date.isoformat(): weight for date, weight in weights}
     # print('\n', 'weights_dictified')
     # pprint(weights_dictified)
-    diary_result = extend_diary(diary_result, weights_dictified, 'weight', None)
+    diary_result = extend_diary(diary_result, weights_dictified, 'body_weight', None)
     # print('\n', 'diary_result')
     # pprint(diary_result)
 
@@ -72,9 +74,16 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     return response_dict
 
 
+@router.post('/body_weight/', tags=['Food -> Diary'])
+def get_stats(body_weight: BodyWeight, user_id=Depends(auth_handler.auth_wrapper)):
+    res = db_save_users_body_weight(body_weight.date_iso, body_weight.body_weight, user_id)
+    return {'result: ': res}
+
+
 @router.get('/stats/{date_iso}', tags=['Food -> Diary'])
 def get_stats(date_iso: str, user_id=Depends(auth_handler.auth_wrapper)):
     # res = db_get_users_cached_stats(user_id)
+    sleep(2)
     return
 
 # @router.post('/food', tags=['Food -> Diary'])
