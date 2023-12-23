@@ -9,6 +9,13 @@ from utils.utils import stopwatch
 
 # @stopwatch
 def get_cached_stats(background_tasks: BackgroundTasks, user_id, date_iso, coefficients):
+    """
+    {'2020-10-14': [97.7, 97.7, 2090.0317, None],
+     '2020-10-15': [97.5, 97.6, 2578.9357999999997, None],
+     ...
+     '2023-12-22': [45.3, 79.2, 359.448, 2348],
+     '2023-12-23': [None, 75.0, 0, 2331]}
+    """
     res = db_get_users_cached_stats(user_id)
 
     if not res:
@@ -17,7 +24,7 @@ def get_cached_stats(background_tasks: BackgroundTasks, user_id, date_iso, coeff
 
     stats_date = res['up_to_date']
     if date_iso <= stats_date:
-        # background_tasks.add_task(save_new_stats, user_id, date_iso, coefficients)  # debug
+        # background_tasks.add_task(save_new_stats, user_id, date_iso, coefficients)  # for debug purposes
         return json.loads(res['stats'])
 
     if date_iso > stats_date:
@@ -33,6 +40,13 @@ def save_new_stats(user_id, date_iso, coefficients):
 
 # @stopwatch
 def get_coefficients(user_id):
+    """
+    {1: 0.88,
+     2: 0.94,
+     ...
+     357: 1.0,
+     358: 1.0}
+    """
     personal_coefficients = {}
     res_use_coeffs = db_get_use_coeffs_bool(user_id)
     if res_use_coeffs[0]:
@@ -87,60 +101,43 @@ def make_ones_for_coefficients():
 
 # @stopwatch
 def stats_recalc(user_id, date_iso, coefficients):
-    first_date = db_get_users_first_date(user_id)[1]
-    # print('\n', 'first_date')
-    # pprint(first_date)
+    first_date = db_get_users_first_date(user_id)
     all_dates = dates_list_prep(first_date, date_iso)
-    # print('\n', 'all_dates')
-    # pprint(all_dates)
 
-    weights_raw = db_get_users_weights_all(user_id)[1]
-    # print('\n', 'weights_raw')
-    # pprint(weights_raw)
+    weights_raw = db_get_users_weights_all(user_id)
     weights_prepped = weights_prep(weights_raw, all_dates)
-    # print('\n', 'weights_prepped')
-    # pprint(weights_prepped)
 
-    diary_entries_raw = db_get_all_diary_entries(user_id)[1]
-    # print('\n', 'diary_entries_raw')
-    # pprint(diary_entries_raw)
+    diary_entries_raw = db_get_all_diary_entries(user_id)
     diary_entries_prepped = diary_entries_prep(diary_entries_raw, all_dates)
-    # print('\n', 'diary_entries_prepped')
-    # pprint(diary_entries_prepped)
 
-    catalogue_raw = db_get_all_catalogue_entries()[1]
-    # print('\n', 'catalogue_raw')
-    # pprint(catalogue_raw)
+    catalogue_raw = db_get_all_catalogue_entries()
     catalogue_prepped = catalogue_prep(catalogue_raw)
-    # print('\n', 'catalogue_prepped')
-    # pprint(catalogue_prepped)
 
     daily_sum_kcals = daily_sum_kcals_count(diary_entries_prepped, catalogue_prepped, coefficients, all_dates)
-    # print('\n', 'daily_sum_kcals')
-    # pprint(daily_sum_kcals)
 
     avg_days = 7
     daily_sum_kcals_avg = average_dict(daily_sum_kcals, avg_days, round_bool=True, round_places=0)
     weights_prepped_avg = average_dict(weights_prepped, avg_days, round_bool=True, round_places=1)
-    # print('\n', 'weights_prepped_avg')
-    # pprint(weights_prepped_avg)
 
     norm_days = 30
     target_kcals = target_kcals_prep(daily_sum_kcals_avg, weights_prepped_avg, norm_days)
     target_kcals_avg = average_dict(target_kcals, norm_days, round_bool=True, round_places=0)
-    # print('\n', 'target_kcals_avg')
-    # pprint(target_kcals_avg)
 
     # print(len(all_dates), len(daily_sum_kcals), len(weights_prepped), len(weights_prepped_avg), len(target_kcals_avg))
 
     stats = stats_prep(all_dates, weights_prepped, weights_prepped_avg, daily_sum_kcals, target_kcals_avg)
-    # print('\n', 'stats')
-    # pprint(stats)
     return stats
 
 
 # @stopwatch
 def stats_prep(all_dates, weights, avg_weights, eaten, target_kcals_avg):
+    """
+    {'2020-10-14': [97.7, 97.7, 2090.0317, None],
+     '2020-10-15': [97.5, 97.6, 2578.9357999999997, None],
+     ...
+     '2023-12-22': [45.3, 79.2, 359.448, 2348],
+     '2023-12-23': [None, 75.0, 0, 2331]}
+    """
     stats = {}
 
     for day in all_dates:
@@ -155,6 +152,13 @@ def stats_prep(all_dates, weights, avg_weights, eaten, target_kcals_avg):
 
 
 def dates_list_prep(first_day, last_day_iso):
+    """
+    [datetime.date(2020, 10, 14),
+     datetime.date(2020, 10, 15),
+     ...
+     datetime.date(2023, 12, 22),
+     datetime.date(2023, 12, 23)]
+    """
     last_day = datetime.fromisoformat(last_day_iso).date()
     days_amt = (last_day - first_day).days + 1
     all_dates = [first_day + timedelta(days=i) for i in range(days_amt)]
@@ -162,6 +166,13 @@ def dates_list_prep(first_day, last_day_iso):
 
 
 def weights_prep(weights_raw, all_dates):
+    """
+    {datetime.date(2020, 10, 14): 97.7,
+     datetime.date(2020, 10, 15): 97.5,
+     ...
+     datetime.date(2023, 12, 22): 45.3,
+     datetime.date(2023, 12, 23): None}
+    """
     weights_prepped = {date: None for date in all_dates}
     for item in weights_raw:
         weights_prepped[item[0]] = float(item[1])
@@ -169,6 +180,13 @@ def weights_prep(weights_raw, all_dates):
 
 
 def diary_entries_prep(diary_entries_raw, all_dates):
+    """
+    {datetime.date(2020, 10, 14): [(133, 11), (27, 153), ...
+     datetime.date(2020, 10, 15): [(111, 45), (110, 145), ...
+     ...
+     datetime.date(2023, 12, 22): [(103, 51), (85, 170)],
+     datetime.date(2023, 12, 23): None}
+    """
     # diary_entries_prepped = dict(all_dates)
     diary_entries_prepped = {date: None for date in all_dates}
     for row in diary_entries_raw:
@@ -181,6 +199,13 @@ def diary_entries_prep(diary_entries_raw, all_dates):
 
 
 def catalogue_prep(catalogue):
+    """
+    {1: 212,
+     2: 165,
+     ...
+     357: 25,
+     358: 20}
+    """
     catalogue_prepped = {}
     for item in catalogue:
         catalogue_prepped[item[0]] = item[1]
@@ -188,6 +213,13 @@ def catalogue_prep(catalogue):
 
 
 def daily_sum_kcals_count(diary_entries_prepped, catalogue_prepped, personal_coeffs, all_dates):
+    """
+    {datetime.date(2020, 10, 14): 2090.0317,
+     datetime.date(2020, 10, 15): 2578.9357999999997,
+     ...
+     datetime.date(2023, 12, 22): 359.448,
+     datetime.date(2023, 12, 23): 0}
+    """
     # daily_sum_kcals = dict(all_dates)
     daily_sum_kcals = {date: None for date in all_dates}
     for key, value in diary_entries_prepped.items():
@@ -203,6 +235,13 @@ def daily_sum_kcals_count(diary_entries_prepped, catalogue_prepped, personal_coe
 
 
 def target_kcals_prep(kcals, weights, n):
+    """
+    {datetime.date(2020, 11, 12): 3172.833333333335,
+     datetime.date(2020, 11, 13): 3109.4999999999986,
+     ...
+     datetime.date(2023, 12, 22): 1085.6666666666674,
+     datetime.date(2023, 12, 23): 2080.8000000000015}
+    """
     kcals_keys = list(kcals.keys())
     kcals_values = list(kcals.values())
     weights_values = list(weights.values())
@@ -235,6 +274,14 @@ def prep_one_weight_for_fiary_view(user_id: int, date_iso: str) -> float | None:
 
 # @stopwatch
 def extend_diary(target_dict, donor_dict, property_name, value_if_none):
+    """
+    {'2023-12-13': {'food': {65328: {'catalogue_id': 166, 'date': datetime.date(2023, 12, 13), 'food_weight': 142, 'id': 65328},
+                             65329: {'catalogue_id': 68, 'date': datetime.date(2023, 12, 13), 'food_weight': 71, 'id': 65329},
+     ... 
+     '2023-12-22': {'food': {65652: {'catalogue_id': 103, 'date': datetime.date(2023, 12, 22), 'food_weight': 51, 'id': 65652},
+                             65653: {'catalogue_id': 85, 'date': datetime.date(2023, 12, 22), 'food_weight': 170, 'id': 65653}}},
+     '2023-12-23': {'food': {}}}
+    """
     for date in target_dict:
         target_dict[date][property_name] = donor_dict.get(date, value_if_none)
     return target_dict
@@ -249,6 +296,13 @@ def extend_diary(target_dict, donor_dict, property_name, value_if_none):
 
 
 def prep_target_kcals(stats, dates_list):
+    """
+    {'2023-12-13': 2470,
+     '2023-12-14': 2475,
+     ...
+     '2023-12-22': 2348,
+     '2023-12-23': 2331}
+    """
     target_kcals = {}
     prev_value = 0
     for date in dates_list:
@@ -259,6 +313,9 @@ def prep_target_kcals(stats, dates_list):
 
 # @stopwatch
 def get_date_range(iso_date, fetch_days_range_offset):
+    """
+    ['2023-12-13', '2023-12-14', ... , '2023-12-22', '2023-12-23']
+    """
     date = datetime.fromisoformat(iso_date)
     dates_before = [(date - timedelta(days=i)).date().isoformat() for i in range(fetch_days_range_offset, 0, -1)]
     dates_after = [(date + timedelta(days=i)).date().isoformat()
@@ -267,8 +324,34 @@ def get_date_range(iso_date, fetch_days_range_offset):
     return result
 
 
+def dictify_dates_list(dates_list):
+    """
+    {'2023-12-13': {}, '2023-12-14': {}, ... , '2023-12-22': {}, '2023-12-23': {}}
+    """
+    return {date: {} for date in dates_list}
+
+
+def dictify_weights_list(weights_list):
+    """
+    {'2023-12-13': Decimal('74.3'),
+     '2023-12-14': Decimal('74.6'),
+     ...
+     '2023-12-21': Decimal('136.0'),
+     '2023-12-22': Decimal('45.3')}
+
+    """
+    return {date.isoformat(): weight for date, weight in weights_list}
+
+
 # @stopwatch
 def organize_by_dates_and_ids(inbound_list: list) -> dict:
+    """
+    {'2023-12-13': {65328: {'catalogue_id': 166, 'date': datetime.date(2023, 12, 13), 'food_weight': 142, 'id': 65328},
+                    65329: {'catalogue_id': 68, 'date': datetime.date(2023, 12, 13), 'food_weight': 71, 'id': 65329},
+     ...
+     '2023-12-22': {65652: {'catalogue_id': 103, 'date': datetime.date(2023, 12, 22), 'food_weight': 51, 'id': 65652},
+                    65653: {'catalogue_id': 85, 'date': datetime.date(2023, 12, 22), 'food_weight': 170, 'id': 65653}}}
+    """
     result_dict = {}
     for food in inbound_list:
         # date = food['date']
@@ -283,11 +366,27 @@ def organize_by_dates_and_ids(inbound_list: list) -> dict:
 
 # @stopwatch
 def list_to_dict_with_ids(inbound_list: list) -> dict:
+    """
+    {1: {'id': 1, 'kcals': 212, 'name': 'Салат мимоза'},
+     2: {'id': 2, 'kcals': 165, 'name': 'Салат колбаса капуста'},
+     ...
+     357: {'id': 357, 'kcals': 25, 'name': 'Ламинарии морская капуста'},
+     358: {'id': 358, 'kcals': 20, 'name': 'Сок томатный'}}
+    """
     result_dict = {}
     for item in inbound_list:
         id = item['id']
         result_dict[id] = item
     return result_dict
+
+
+def catalogue_ids_prep(ids: str | None) -> list[int]:
+    """
+    ['77', '66']
+    """
+    if ids == None:
+        return []
+    return json.loads(ids[0])
 
 
 def average_list(input_list, avg_range, round_bool=False, round_places=0):
@@ -307,6 +406,13 @@ def average_list(input_list, avg_range, round_bool=False, round_places=0):
 
 
 def average_dict(input_dict, avg_range, round_bool=False, round_places=0):
+    """
+    {datetime.date(2020, 10, 14): 97.7,
+     datetime.date(2020, 10, 15): 97.6,
+     ...
+     datetime.date(2023, 12, 22): 79.2,
+     datetime.date(2023, 12, 23): 75.0}
+    """
     input_dict_keys = list(input_dict.keys())
     input_dict_values = list(input_dict.values())
 

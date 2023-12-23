@@ -27,6 +27,13 @@ def dictify_fetchone(cursor):
 
 # @stopwatch
 def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int) -> list[dict[str, int | str]] | None | bool:
+    """
+    [{'catalogue_id': 166, 'date': datetime.date(2023, 12, 13), 'food_weight': 142, 'id': 65328},
+     {'catalogue_id': 68, 'date': datetime.date(2023, 12, 13), 'food_weight': 71, 'id': 65329},
+     ...
+     {'catalogue_id': 103, 'date': datetime.date(2023, 12, 22), 'food_weight': 51, 'id': 65652},
+     {'catalogue_id': 85, 'date': datetime.date(2023, 12, 22), 'food_weight': 170, 'id': 65653}]
+    """
     try:
         with connection45.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
@@ -52,6 +59,13 @@ def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int)
 
 # @stopwatch
 def db_get_users_weights_range(date_iso_start: str, date_iso_end: str, user_id: int):
+    """
+    [(datetime.date(2023, 12, 13), Decimal('74.3')),
+     (datetime.date(2023, 12, 14), Decimal('74.6')),
+     ...
+     (datetime.date(2023, 12, 21), Decimal('136.0')),
+     (datetime.date(2023, 12, 22), Decimal('45.3'))]
+    """
     try:
         with connection45.cursor() as cursor:
             sql = '''
@@ -78,13 +92,22 @@ def db_get_users_weights_range(date_iso_start: str, date_iso_end: str, user_id: 
 
 # @stopwatch
 def db_get_catalogue() -> tuple[str, list]:
+    """
+    [{'id': 188, 'kcals': 100, 'name': 'kcals1'},
+     {'id': 192, 'kcals': 19, 'name': 'Айран'},
+     ...
+     {'id': 202, 'kcals': 237, 'name': 'Яйца жареные'},
+     {'id': 166, 'kcals': 155, 'name': 'Яйцо'}]
+    """
     try:
         with connection45.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
                 SELECT
                     id, name, kcals
                 FROM
-                    catalogue;'''
+                    catalogue
+                ORDER BY
+                    name ASC;'''
             cursor.execute(sql,)
             res = dictify_fetchall(cursor)
         return res
@@ -119,7 +142,7 @@ def db_get_users_cached_stats(user_id: int):
                 SELECT
                     up_to_date, stats
                 FROM
-                    kcal_stats
+                    food_stats
                 WHERE
                     user_id=%s;'''
             values = (user_id,)
@@ -138,13 +161,13 @@ def db_save_users_stats(date_iso: str, stats: str, user_id: int):
             if not res0:
                 sql = '''
                     INSERT INTO
-                        kcal_stats (up_to_date, stats, user_id)
+                        food_stats (up_to_date, stats, user_id)
                     VALUES
                         (%s, %s, %s);'''
             else:
                 sql = '''
                     UPDATE
-                        kcal_stats
+                        food_stats
                     SET
                         up_to_date=%s, stats=%s
                     WHERE
@@ -203,6 +226,31 @@ def db_save_users_body_weight(date_iso: str, weight: float, user_id: int):
             cursor.execute(sql, values)
             connection45.commit()
             return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+### CATALOGUE ##########################################################################################################
+
+def db_get_users_food_catalogue_ids(user_id: int):
+    """
+    ['["77","66"]']
+    """
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                SELECT
+                    food_id_list
+                FROM
+                    food_users_catalogue
+                WHERE
+                    user_id=%s;'''
+            values = (user_id,)
+            cursor.execute(sql, values)
+            # res = dictify_fetchone(cursor)
+            res = cursor.fetchone()
+        return res
     except Exception as exc:
         print(exc)
         return False
@@ -298,6 +346,9 @@ def db_get_food_from_diary(user_id, date_iso):
 
 
 def db_get_users_first_date(user_id):
+    """
+    datetime.date(2020, 10, 14)
+    """
     try:
         with connection45.cursor() as c:
             dates = []
@@ -309,45 +360,67 @@ def db_get_users_first_date(user_id):
             c.execute(sql, values)
             dates.append(c.fetchone()[0])
             first_date = min(dates)
-        return ('success', first_date)
+        return first_date
     except Exception as exc:
         print(exc)
         return ('failure', [])
 
 
 def db_get_users_weights_all(user_id):
+    """
+    [(datetime.date(2020, 10, 14), Decimal('97.7')),
+     (datetime.date(2020, 10, 15), Decimal('97.5')),
+     ...
+     (datetime.date(2023, 12, 21), Decimal('136.0')),
+     (datetime.date(2023, 12, 22), Decimal('45.3'))]
+    """
     try:
         with connection45.cursor() as c:
             sql = 'select date, weight from weights where users_id=%s order by date;'
             values = (user_id,)
             c.execute(sql, values)
             res = c.fetchall()
-        return ('success', res)
+        return res
     except Exception as exc:
         print(exc)
         return ('failure', [])
 
 
 def db_get_all_diary_entries(user_id):
+    """
+    [(datetime.date(2020, 10, 14), 133, 11),
+     (datetime.date(2020, 10, 14), 27, 153),
+     ...
+     (datetime.date(2023, 12, 22), 103, 51),
+     (datetime.date(2023, 12, 22), 85, 170)]
+    """
     try:
         with connection45.cursor() as c:
             sql = 'select date, catalogue_id, food_weight from diary where users_id=%s order by date;'
             values = (user_id,)
             c.execute(sql, values)
             res = c.fetchall()
-            return ('success', res)
+            return res
     except Exception as exc:
         print(exc)
         return ('failure', [])
 
 
 def db_get_all_catalogue_entries():
+    """
+    [(1, 212, 'Салат мимоза'),
+     (2, 165, 'Салат колбаса капуста'),
+     ...
+     (357, 25, 'Ламинарии морская капуста'),
+     (358, 20, 'Сок томатный')]
+    """
+
     try:
         with connection45.cursor() as c:
             sql = 'select id, kcals, name from catalogue order by id;'
             c.execute(sql, )
             res = c.fetchall()
-        return ('success', res)
+        return res
     except Exception as exc:
         print(exc)
         return ('failure', [])
