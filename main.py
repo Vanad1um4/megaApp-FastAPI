@@ -23,7 +23,7 @@ tags_metadata = [
 app = FastAPI(title='megaApp', openapi_tags=tags_metadata)
 
 app.include_router(auth.router, prefix='/api/auth')
-app.include_router(food.router, prefix='/api/kcal')
+app.include_router(food.router, prefix='/api/food')
 app.include_router(currency.router, prefix='/api/money')
 app.include_router(bank.router, prefix='/api/money')
 app.include_router(account.router, prefix='/api/money')

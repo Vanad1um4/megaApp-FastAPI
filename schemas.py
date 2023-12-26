@@ -16,6 +16,12 @@ class BodyWeight(BaseModel):
     date_iso: str
 
 
+class CatalogueEntry(BaseModel):
+    id: int
+    name: str
+    kcals: int
+
+
 # MONEY #
 
 class Currency(BaseModel):

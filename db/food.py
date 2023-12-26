@@ -25,6 +25,8 @@ def dictify_fetchone(cursor):
         return None
 
 
+### DIARY ######################################################################
+
 # @stopwatch
 def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int) -> list[dict[str, int | str]] | None | bool:
     """
@@ -90,32 +92,6 @@ def db_get_users_weights_range(date_iso_start: str, date_iso_end: str, user_id: 
         return False
 
 
-# @stopwatch
-def db_get_catalogue() -> tuple[str, list]:
-    """
-    [{'id': 188, 'kcals': 100, 'name': 'kcals1'},
-     {'id': 192, 'kcals': 19, 'name': 'Айран'},
-     ...
-     {'id': 202, 'kcals': 237, 'name': 'Яйца жареные'},
-     {'id': 166, 'kcals': 155, 'name': 'Яйцо'}]
-    """
-    try:
-        with connection45.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''
-                SELECT
-                    id, name, kcals
-                FROM
-                    catalogue
-                ORDER BY
-                    name ASC;'''
-            cursor.execute(sql,)
-            res = dictify_fetchall(cursor)
-        return res
-    except Exception as exc:
-        print(exc)
-        return False
-
-
 def db_get_users_coefficients(user_id: int) -> tuple[str, list]:
     try:
         with connection45.cursor() as cursor:
@@ -175,13 +151,13 @@ def db_save_users_stats(date_iso: str, stats: str, user_id: int):
             values = (date_iso, stats, user_id,)
             cursor.execute(sql, values)
             connection.commit()
-            return True
+        return True
     except Exception as exc:
         print(exc)
         return False
 
 
-### BODY WEIGHT ########################################################################################################
+### BODY WEIGHT ################################################################
 
 def db_get_users_body_weight(date_iso: str, user_id: int) -> tuple[str, list]:
     try:
@@ -225,15 +201,84 @@ def db_save_users_body_weight(date_iso: str, weight: float, user_id: int):
             values = (weight, user_id, date_iso)
             cursor.execute(sql, values)
             connection45.commit()
-            return True
+        return True
     except Exception as exc:
         print(exc)
         return False
 
 
-### CATALOGUE ##########################################################################################################
+### CATALOGUE ##################################################################
 
-def db_get_users_food_catalogue_ids(user_id: int):
+# @stopwatch
+def db_get_catalogue() -> tuple[str, list]:
+    """
+    [{'id': 188, 'kcals': 100, 'name': 'kcals1'},
+     {'id': 192, 'kcals': 19, 'name': 'Айран'},
+     ...
+     {'id': 202, 'kcals': 237, 'name': 'Яйца жареные'},
+     {'id': 166, 'kcals': 155, 'name': 'Яйцо'}]
+    """
+    try:
+        # with connection45.cursor(cursor_factory=DictCursor) as cursor:
+        #             catalogue
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                SELECT
+                    id, name, kcals
+                FROM
+                    food_catalogue
+                ORDER BY
+                    name ASC;'''
+            cursor.execute(sql,)
+            res = dictify_fetchall(cursor)
+        return res
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+def db_add_new_catalogue_entry(food_name: str, food_kcals: int):
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                INSERT INTO
+                    food_catalogue (name, kcals)
+                VALUES
+                    (%s, %s)
+                RETURNING
+                    id;'''
+            values = (food_name, food_kcals)
+            cursor.execute(sql, values)
+            id = cursor.fetchone()
+            connection.commit()
+        return id
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+def db_update_catalogue_entry(food_id: int, food_name: str, food_kcals: int) -> bool:
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                UPDATE 
+                    food_catalogue 
+                SET
+                    name=%s, kcals=%s
+                WHERE
+                    id=%s;'''
+            values = (food_name, food_kcals, food_id)
+            cursor.execute(sql, values)
+            connection.commit()
+        return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+### USERS_CATALOGUE ############################################################
+
+def db_get_users_food_catalogue_ids_list(user_id: int):
     """
     ['["77","66"]']
     """
@@ -256,9 +301,45 @@ def db_get_users_food_catalogue_ids(user_id: int):
         return False
 
 
-########################################################################################################################
-### OLD FUNCTIONS ######################################################################################################
-########################################################################################################################
+def db_add_users_food_catalogue_ids_list(food_ids_list: list[int], user_id: int) -> bool:
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                INSERT INTO
+                    food_users_catalogue (food_id_list, user_id)
+                VALUES
+                    (%s, %s);'''
+            values = (food_ids_list, user_id)
+            cursor.execute(sql, values)
+            connection.commit()
+        return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+def db_update_users_food_catalogue_ids_list(food_ids_list: list[int], user_id: int) -> bool:
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                UPDATE 
+                    food_users_catalogue 
+                SET
+                    food_id_list=%s
+                WHERE
+                    user_id=%s;'''
+            values = (food_ids_list, user_id)
+            cursor.execute(sql, values)
+            connection.commit()
+        return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+################################################################################
+### OLD FUNCTIONS ##############################################################
+################################################################################
 
 def db_get_use_coeffs_bool(user_id):
     try:
@@ -400,7 +481,7 @@ def db_get_all_diary_entries(user_id):
             values = (user_id,)
             c.execute(sql, values)
             res = c.fetchall()
-            return res
+        return res
     except Exception as exc:
         print(exc)
         return ('failure', [])
