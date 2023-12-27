@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 from time import sleep
 
 from utils.auth import AuthHandler
-from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list
+from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list, db_add_diary_entry
 from utils.food_utils import organize_by_dates_and_ids, list_to_dict_with_ids, get_coefficients, extend_diary, get_date_range, get_cached_stats, prep_target_kcals, catalogue_ids_prep, dictify_dates_list, dictify_weights_list
 from env import FETCH_DAYS_RANGE_OFFSET
-from schemas import BodyWeight, CatalogueEntry
+from schemas import BodyWeight, CatalogueEntry, DiaryEntry
 
 router = APIRouter()
 auth_handler = AuthHandler()
@@ -50,10 +50,32 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     return response_dict
 
 
+@router.post('/diary/', tags=['Food -> Diary'])
+def new_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
+    res = db_add_diary_entry(diary_entry.date_iso, diary_entry.catalogue_id, diary_entry.food_weight, user_id)
+    if res:
+        return {'result': True, 'value': res[0]}
+    return {'result': False}
+
+
+@router.put('/diary/', tags=['Food -> Diary'])
+def edit_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
+    print('\n', 'diary_entry')
+    pprint(diary_entry)
+    return {'result': True, 'value': 666}
+
+
+@router.delete('/diary/', tags=['Food -> Diary'])
+def delete_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
+    print('\n', 'diary_entry')
+    pprint(diary_entry)
+    return {'result': True, 'value': 666}
+
+
 @router.post('/body_weight/', tags=['Food -> Diary'])
 def save_body_weight(body_weight: BodyWeight, user_id=Depends(auth_handler.auth_wrapper)):
     res = db_save_users_body_weight(body_weight.date_iso, body_weight.body_weight, user_id)
-    return {'result:': res}
+    return {'result': res}
 
 
 @router.post('/catalogue/', tags=['Food -> Diary'])

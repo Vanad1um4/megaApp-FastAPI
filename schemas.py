@@ -16,6 +16,13 @@ class BodyWeight(BaseModel):
     date_iso: str
 
 
+class DiaryEntry(BaseModel):
+    id: int | None
+    date_iso: str
+    catalogue_id: int
+    food_weight: int
+
+
 class CatalogueEntry(BaseModel):
     id: int
     name: str

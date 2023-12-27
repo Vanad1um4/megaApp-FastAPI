@@ -1,5 +1,5 @@
 from psycopg2.extras import DictCursor
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 # from schemas import Bank
 from db.db import get_connection45
@@ -28,7 +28,7 @@ def dictify_fetchone(cursor):
 ### DIARY ######################################################################
 
 # @stopwatch
-def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int) -> list[dict[str, int | str]] | None | bool:
+def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int) -> list[dict[str, int | date | float]] | None | bool:
     """
     [{'catalogue_id': 166, 'date': datetime.date(2023, 12, 13), 'food_weight': 142, 'id': 65328},
      {'catalogue_id': 68, 'date': datetime.date(2023, 12, 13), 'food_weight': 71, 'id': 65329},
@@ -48,8 +48,6 @@ def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int)
                     AND date BETWEEN date %s AND date %s 
                 ORDER BY
                     date ASC, id ASC;'''
-            # AND date BETWEEN date %s - %s AND date %s + %s
-            # values = (user_id, date_iso, FETCH_DAYS_RANGE_OFFSET, date_iso, FETCH_DAYS_RANGE_OFFSET)
             values = (user_id, date_iso_start, date_iso_end)
             cursor.execute(sql, values)
             res = dictify_fetchall(cursor)
@@ -58,6 +56,28 @@ def db_get_diary_by_userid(date_iso_start: str, date_iso_end: str, user_id: int)
         print(exc)
         return False
 
+
+def db_add_diary_entry(date_iso: str, catalogue_id: int, food_weight: int, user_id: int):
+    try:
+        with connection45.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                INSERT INTO 
+                    diary (date, catalogue_id, food_weight, users_id)
+                VALUES
+                    (%s, %s, %s, %s)
+                RETURNING
+                    id;'''
+            values = (date_iso, catalogue_id, food_weight, user_id)
+            cursor.execute(sql, values)
+            id = cursor.fetchone()
+            connection45.commit()
+        return id
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+### WEIGHTS ####################################################################
 
 # @stopwatch
 def db_get_users_weights_range(date_iso_start: str, date_iso_end: str, user_id: int):
@@ -83,83 +103,13 @@ def db_get_users_weights_range(date_iso_start: str, date_iso_end: str, user_id: 
             values = (user_id, date_iso_start, date_iso_end)
             cursor.execute(sql, values)
             res = cursor.fetchall()
-            # res = [(date.strftime('%Y-%m-%d'), weight) for date, weight in res]
-            # res = {date.isoformat(): weight for date, weight in res}
-
         return res
     except Exception as exc:
         print(exc)
         return False
 
 
-def db_get_users_coefficients(user_id: int) -> tuple[str, list]:
-    try:
-        with connection45.cursor() as cursor:
-            sql = '''
-                SELECT
-                    coefficients
-                FROM
-                    options
-                WHERE
-                    user_id=%s;'''
-            values = (user_id,)
-            cursor.execute(sql, values)
-            res = cursor.fetchone()
-        return res
-    except Exception as exc:
-        print(exc)
-        return False
-
-
-def db_get_users_cached_stats(user_id: int):
-    try:
-        with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''
-                SELECT
-                    up_to_date, stats
-                FROM
-                    food_stats
-                WHERE
-                    user_id=%s;'''
-            values = (user_id,)
-            cursor.execute(sql, values)
-            res = dictify_fetchone(cursor)
-        return res
-    except Exception as exc:
-        print(exc)
-        return False
-
-
-def db_save_users_stats(date_iso: str, stats: str, user_id: int):
-    try:
-        with connection.cursor() as cursor:
-            res0 = db_get_users_cached_stats(user_id)
-            if not res0:
-                sql = '''
-                    INSERT INTO
-                        food_stats (up_to_date, stats, user_id)
-                    VALUES
-                        (%s, %s, %s);'''
-            else:
-                sql = '''
-                    UPDATE
-                        food_stats
-                    SET
-                        up_to_date=%s, stats=%s
-                    WHERE
-                        user_id=%s;'''
-            values = (date_iso, stats, user_id,)
-            cursor.execute(sql, values)
-            connection.commit()
-        return True
-    except Exception as exc:
-        print(exc)
-        return False
-
-
-### BODY WEIGHT ################################################################
-
-def db_get_users_body_weight(date_iso: str, user_id: int) -> tuple[str, list]:
+def db_get_users_body_weight(date_iso: str, user_id: int):
     try:
         with connection45.cursor() as cursor:
             sql = '''
@@ -201,6 +151,75 @@ def db_save_users_body_weight(date_iso: str, weight: float, user_id: int):
             values = (weight, user_id, date_iso)
             cursor.execute(sql, values)
             connection45.commit()
+        return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+### COEFFICIENTS ###############################################################
+
+def db_get_users_coefficients(user_id: int) -> tuple[str, list]:
+    try:
+        with connection45.cursor() as cursor:
+            sql = '''
+                SELECT
+                    coefficients
+                FROM
+                    options
+                WHERE
+                    user_id=%s;'''
+            values = (user_id,)
+            cursor.execute(sql, values)
+            res = cursor.fetchone()
+        return res
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+### STATS ###############################################################
+
+def db_get_users_cached_stats(user_id: int):
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                SELECT
+                    up_to_date, stats
+                FROM
+                    food_stats
+                WHERE
+                    user_id=%s;'''
+            values = (user_id,)
+            cursor.execute(sql, values)
+            res = dictify_fetchone(cursor)
+        return res
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+def db_save_users_stats(date_iso: str, stats: str, user_id: int):
+    try:
+        with connection.cursor() as cursor:
+            res0 = db_get_users_cached_stats(user_id)
+            if not res0:
+                sql = '''
+                    INSERT INTO
+                        food_stats (up_to_date, stats, user_id)
+                    VALUES
+                        (%s, %s, %s);'''
+            else:
+                sql = '''
+                    UPDATE
+                        food_stats
+                    SET
+                        up_to_date=%s, stats=%s
+                    WHERE
+                        user_id=%s;'''
+            values = (date_iso, stats, user_id,)
+            cursor.execute(sql, values)
+            connection.commit()
         return True
     except Exception as exc:
         print(exc)
