@@ -77,6 +77,26 @@ def db_add_diary_entry(date_iso: str, catalogue_id: int, food_weight: int, user_
         return False
 
 
+def db_edit_diary_entry(food_weight: int, diary_id: int, user_id: int):
+    try:
+        with connection45.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                UPDATE 
+                    diary 
+                SET
+                    food_weight=%s
+                WHERE
+                    id=%s
+                    AND users_id=%s;'''
+            values = (food_weight, diary_id, user_id)
+            cursor.execute(sql, values)
+            connection45.commit()
+        return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
 ### WEIGHTS ####################################################################
 
 # @stopwatch
