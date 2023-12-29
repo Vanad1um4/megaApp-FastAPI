@@ -97,6 +97,24 @@ def db_edit_diary_entry(food_weight: int, diary_id: int, user_id: int):
         return False
 
 
+def db_delete_diary_entry(diary_id: int, user_id: int):
+    try:
+        with connection45.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                DELETE FROM
+                    diary
+                WHERE
+                    id=%s
+                    AND users_id=%s;'''
+            values = (diary_id, user_id)
+            cursor.execute(sql, values)
+            connection45.commit()
+        return True
+    except Exception as exc:
+        print(exc)
+        return False
+
+
 ### WEIGHTS ####################################################################
 
 # @stopwatch

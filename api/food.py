@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from time import sleep
 
 from utils.auth import AuthHandler
-from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list, db_add_diary_entry, db_edit_diary_entry
+from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list, db_add_diary_entry, db_edit_diary_entry, db_delete_diary_entry
 from utils.food_utils import organize_by_dates_and_ids, list_to_dict_with_ids, get_coefficients, extend_diary, get_date_range, get_cached_stats, prep_target_kcals, catalogue_ids_prep, dictify_dates_list, dictify_weights_list
 from env import FETCH_DAYS_RANGE_OFFSET
 from schemas import BodyWeight, CatalogueEntry, DiaryEntry
@@ -66,11 +66,12 @@ def edit_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_
     return {'result': False}
 
 
-@router.delete('/diary/', tags=['Food -> Diary'])
-def delete_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
-    print('\n', 'diary_entry')
-    pprint(diary_entry)
-    return {'result': True, 'value': 666}
+@router.delete('/diary/{diary_entry_id}', tags=['Food -> Diary'])
+def delete_diary_entry(diary_entry_id: int, user_id=Depends(auth_handler.auth_wrapper)):
+    res = db_delete_diary_entry(diary_entry_id, user_id)
+    if res:
+        return {'result': True, 'value': diary_entry_id}
+    return {'result': False}
 
 
 @router.post('/body_weight/', tags=['Food -> Diary'])
