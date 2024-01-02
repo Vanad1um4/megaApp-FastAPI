@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from time import sleep
 
 from utils.auth import AuthHandler
-from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list, db_add_diary_entry, db_edit_diary_entry, db_delete_diary_entry
+from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list, db_add_diary_entry, db_edit_diary_entry, db_delete_diary_entry, db_get_height
 from utils.food_utils import organize_by_dates_and_ids, list_to_dict_with_ids, get_coefficients, extend_diary, get_date_range, get_cached_stats, prep_target_kcals, catalogue_ids_prep, dictify_dates_list, dictify_weights_list
 from env import FETCH_DAYS_RANGE_OFFSET
 from schemas import BodyWeight, CatalogueEntry, DiaryEntry
@@ -23,11 +23,11 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
 
     diary_food_raw = db_get_diary_by_userid(dates_list[0], dates_list[-1], user_id)
     diary_food_prepped = organize_by_dates_and_ids(diary_food_raw)
-    diary_result = extend_diary(diary_result, diary_food_prepped, 'food', {})
+    diary_result = extend_diary(diary_result, 'food', diary_food_prepped, {})
 
     weights_list = db_get_users_weights_range(dates_list[0], dates_list[-1], user_id)
     weights_dictified = dictify_weights_list(weights_list)
-    diary_result = extend_diary(diary_result, weights_dictified, 'body_weight', None)
+    diary_result = extend_diary(diary_result, 'body_weight', weights_dictified, None)
 
     # TODO: сократить количество запросов к базе данных тут
     coefficients = get_coefficients(user_id)
@@ -35,7 +35,7 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
 
     stats = get_cached_stats(background_tasks, user_id, date_iso, coefficients)
     target_kcals = prep_target_kcals(stats, dates_list)
-    diary_result = extend_diary(diary_result, target_kcals, 'target_kcals', None)
+    diary_result = extend_diary(diary_result, 'target_kcals', target_kcals, None)
     response_dict['diary'] = diary_result
 
     catalogue_raw = db_get_catalogue()
@@ -45,6 +45,9 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     personal_catalogue_raw = db_get_users_food_catalogue_ids_list(user_id)
     personal_catalogue_prepped = catalogue_ids_prep(personal_catalogue_raw)
     response_dict['personal_catalogue_ids'] = personal_catalogue_prepped
+
+    users_height = db_get_height(user_id)
+    response_dict['height'] = users_height[0] or 0
 
     # background_tasks.add_task(stats_recalc, user_id, date_iso, coefficients)
     return response_dict

@@ -3,7 +3,7 @@ from pprint import pprint
 import json
 from datetime import datetime, timedelta
 
-from db.food import db_get_diary_by_userid, db_get_use_coeffs_bool, db_get_catalogue_ids, db_get_users_coefficients, db_set_users_coefficients, db_get_food_from_diary, db_get_users_first_date, db_get_users_weights_all, db_get_all_diary_entries, db_get_all_catalogue_entries, db_get_users_diary_entries_and_helth_values, db_get_one_weight, db_get_all_food_names, db_get_height, db_get_users_cached_stats, db_save_users_stats
+from db.food import db_get_use_coeffs_bool, db_get_catalogue_ids, db_get_users_coefficients, db_set_users_coefficients, db_get_users_first_date, db_get_users_weights_all, db_get_all_diary_entries, db_get_all_catalogue_entries, db_get_one_weight, db_get_users_cached_stats, db_save_users_stats
 from utils.utils import stopwatch
 
 
@@ -273,7 +273,7 @@ def prep_one_weight_for_fiary_view(user_id: int, date_iso: str) -> float | None:
 ########################################################################################################################
 
 # @stopwatch
-def extend_diary(target_dict, donor_dict, property_name, value_if_none):
+def extend_diary(target_dict, property_name, value, value_if_none):
     """
     {'2023-12-13': {'food': {65328: {'catalogue_id': 166, 'date': datetime.date(2023, 12, 13), 'food_weight': 142, 'id': 65328},
                              65329: {'catalogue_id': 68, 'date': datetime.date(2023, 12, 13), 'food_weight': 71, 'id': 65329},
@@ -283,7 +283,7 @@ def extend_diary(target_dict, donor_dict, property_name, value_if_none):
      '2023-12-23': {'food': {}}}
     """
     for date in target_dict:
-        target_dict[date][property_name] = donor_dict.get(date, value_if_none)
+        target_dict[date][property_name] = value.get(date, value_if_none)
     return target_dict
 
 

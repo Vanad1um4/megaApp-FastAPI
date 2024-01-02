@@ -622,12 +622,18 @@ def db_get_all_food_names(user_id):
 
 def db_get_height(user_id):
     try:
-        with connection45.cursor() as c:
-            sql = 'select height from options where user_id=%s'
+        with connection.cursor() as cursor:
+            sql = '''
+                SELECT
+                    height
+                FROM
+                    "user"
+                WHERE
+                    id=%s'''
             values = (user_id,)
-            c.execute(sql, values)
-            res = c.fetchone()
-        return ('success', res)
+            cursor.execute(sql, values)
+            res = cursor.fetchone()
+        return res
     except Exception as exc:
         print(exc)
-        return ('failure', [])
+        return False
