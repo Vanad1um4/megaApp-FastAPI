@@ -1,5 +1,7 @@
 import psycopg2
 
+from psycopg2.extras import DictCursor
+
 from env import *
 
 
@@ -13,11 +15,15 @@ def get_connection():
     )
 
 
-def get_connection45():
-    return psycopg2.connect(
-        host=DB_HOST45,
-        port=DB_PORT45,
-        database=DB_NAME45,
-        user=DB_USER45,
-        password=DB_PASS45
-    )
+def dictify_fetchall(cursor: DictCursor):
+    columns = [col[0] for col in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def dictify_fetchone(cursor: DictCursor):
+    columns = [col[0] for col in cursor.description]
+    row = cursor.fetchone()
+    if row is not None:
+        return dict(zip(columns, row))
+    else:
+        return None

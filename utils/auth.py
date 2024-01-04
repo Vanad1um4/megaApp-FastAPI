@@ -38,4 +38,4 @@ class AuthHandler():
 
     def auth_wrapper(self, auth: HTTPAuthorizationCredentials = Security(security)):
         user_id = db_get_user_id_by_email(self.decode_token(auth.credentials))
-        return user_id
+        return user_id[0]

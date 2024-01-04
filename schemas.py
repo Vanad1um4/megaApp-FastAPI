@@ -19,8 +19,9 @@ class BodyWeight(BaseModel):
 class DiaryEntry(BaseModel):
     id: int | None
     date: str
-    catalogue_id: int
+    food_catalogue_id: int
     food_weight: int
+    # history: str
 
 
 class CatalogueEntry(BaseModel):

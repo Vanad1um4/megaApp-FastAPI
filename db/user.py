@@ -34,7 +34,7 @@ def db_get_user_id_by_email(user_email):
                     email=%s;'''
             values = (user_email,)
             cursor.execute(sql, values)
-            res = cursor.fetchone()[0]
+            res = cursor.fetchone()
             return res
     except Exception as exc:
         print(exc)

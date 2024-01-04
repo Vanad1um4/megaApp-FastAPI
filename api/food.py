@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
-from pprint import pprint
 import json
+
+from fastapi import APIRouter, Depends, BackgroundTasks
 from datetime import datetime, timedelta
+from pprint import pprint
 from time import sleep
 
+from db.food import *
+from utils.food_utils import *
+
 from utils.auth import AuthHandler
-from db.food import db_get_diary_by_userid, db_get_catalogue, db_get_users_weights_range, db_save_users_body_weight, db_get_users_food_catalogue_ids_list, db_add_new_catalogue_entry, db_update_catalogue_entry, db_update_users_food_catalogue_ids_list, db_add_users_food_catalogue_ids_list, db_add_diary_entry, db_edit_diary_entry, db_delete_diary_entry, db_get_height
-from utils.food_utils import organize_by_dates_and_ids, list_to_dict_with_ids, get_coefficients, extend_diary, get_date_range, get_cached_stats, prep_target_kcals, catalogue_ids_prep, dictify_dates_list, dictify_weights_list
 from env import FETCH_DAYS_RANGE_OFFSET
 from schemas import BodyWeight, CatalogueEntry, DiaryEntry
+
 
 router = APIRouter()
 auth_handler = AuthHandler()
@@ -21,11 +24,11 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     dates_list = get_date_range(date_iso, FETCH_DAYS_RANGE_OFFSET)
     diary_result = dictify_dates_list(dates_list)
 
-    diary_food_raw = db_get_diary_by_userid(dates_list[0], dates_list[-1], user_id)
+    diary_food_raw = db_get_range_of_users_diary_entries(dates_list[0], dates_list[-1], user_id)
     diary_food_prepped = organize_by_dates_and_ids(diary_food_raw)
     diary_result = extend_diary(diary_result, 'food', diary_food_prepped, {})
 
-    weights_list = db_get_users_weights_range(dates_list[0], dates_list[-1], user_id)
+    weights_list = db_get_range_of_users_body_weights(dates_list[0], dates_list[-1], user_id)
     weights_dictified = dictify_weights_list(weights_list)
     diary_result = extend_diary(diary_result, 'body_weight', weights_dictified, None)
 
@@ -38,7 +41,7 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     diary_result = extend_diary(diary_result, 'target_kcals', target_kcals, None)
     response_dict['diary'] = diary_result
 
-    catalogue_raw = db_get_catalogue()
+    catalogue_raw = db_get_all_catalogue_entries()
     catalogue_prepped = list_to_dict_with_ids(catalogue_raw)
     response_dict['catalogue'] = catalogue_prepped
 
@@ -46,7 +49,7 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
     personal_catalogue_prepped = catalogue_ids_prep(personal_catalogue_raw)
     response_dict['personal_catalogue_ids'] = personal_catalogue_prepped
 
-    users_height = db_get_height(user_id)
+    users_height = db_get_users_height(user_id)
     response_dict['height'] = users_height[0] or 0
 
     # background_tasks.add_task(stats_recalc, user_id, date_iso, coefficients)
@@ -55,7 +58,7 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
 
 @router.post('/diary/', tags=['Food -> Diary'])
 def new_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
-    res = db_add_diary_entry(diary_entry.date, diary_entry.catalogue_id, diary_entry.food_weight, user_id)
+    res = db_add_diary_entry(diary_entry.date, diary_entry.food_catalogue_id, diary_entry.food_weight, user_id)
     if res:
         return {'result': True, 'value': res[0]}
     return {'result': False}
@@ -131,37 +134,5 @@ def remove_entry_from_user_catalogue(food_id: int, user_id=Depends(auth_handler.
 @router.get('/stats/{date_iso}', tags=['Food -> Diary'])
 def get_stats(date_iso: str, user_id=Depends(auth_handler.auth_wrapper)):
     # res = db_get_users_cached_stats(user_id)
-    sleep(2)
+    # sleep(2)
     return
-
-# @router.post('/food', tags=['Food -> Diary'])
-# def add_bank(bank: Bank, user_id=Depends(auth_handler.auth_wrapper)):
-#     # res = db_add_bank(bank, user_id)
-#     # return {'result: ': res}
-#     return
-
-
-# @router.put('/food/{bank_id}', tags=['Food -> Diary'])
-# def edit_bank(bank: Bank, bank_id: int, user_id=Depends(auth_handler.auth_wrapper)):
-#     # res = db_update_bank(bank, bank_id, user_id)
-#     # return {'result: ': res}
-#     return
-
-
-# @router.delete('/food/{bank_id}', tags=['Food -> Diary'])
-# def delete_bank(bank_id: int, user_id=Depends(auth_handler.auth_wrapper)):
-#     # res = db_delete_bank(bank_id, user_id)
-#     # return {'result: ': res}
-#     return
-
-# # TODO: ломает подзагрузку, возвращает не так же оформленную еду как в get_full_update!!!
-# @router.get('/food/{date_iso}', tags=['Food -> Diary'])
-# def get_food(date_iso: str, user_id=Depends(auth_handler.auth_wrapper)):
-#     response_dict = {}
-#     dates_list = get_date_range(date_iso, FETCH_DAYS_RANGE_OFFSET)
-#     diary_food_raw = db_get_diary_by_userid(dates_list[0], dates_list[-1], user_id)
-#     diary_food_prepped = organize_by_dates_and_ids(diary_food_raw)
-#     diary_result = {date: {} for date in dates_list}
-#     diary_result = extend_diary(diary_result, diary_food_prepped, 'food', {})
-#     response_dict['diary'] = diary_result
-#     return response_dict
