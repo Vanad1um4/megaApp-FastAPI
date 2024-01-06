@@ -16,12 +16,17 @@ class BodyWeight(BaseModel):
     date_iso: str
 
 
+class HistoryEntry(BaseModel):
+    action: str
+    value: int
+
+
 class DiaryEntry(BaseModel):
     id: int | None
     date: str
     food_catalogue_id: int
     food_weight: int
-    # history: str
+    history: list[HistoryEntry]
 
 
 class CatalogueEntry(BaseModel):

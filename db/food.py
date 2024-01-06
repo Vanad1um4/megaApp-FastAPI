@@ -36,7 +36,7 @@ def db_get_range_of_users_diary_entries(date_iso_start: str, date_iso_end: str, 
         with connection.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
                 SELECT 
-                    id, date, food_catalogue_id, food_weight
+                    id, date, food_catalogue_id, food_weight, history
                 FROM
                     food_diary
                 WHERE
@@ -53,17 +53,17 @@ def db_get_range_of_users_diary_entries(date_iso_start: str, date_iso_end: str, 
         return False
 
 
-def db_add_diary_entry(date_iso: str, food_catalogue_id: int, food_weight: int, user_id: int):
+def db_add_diary_entry(date_iso: str, food_catalogue_id: int, food_weight: int, history: str, user_id: int):
     try:
         with connection.cursor() as cursor:
             sql = '''
                 INSERT INTO 
-                    food_diary (date, food_catalogue_id, food_weight, user_id)
+                    food_diary (date, food_catalogue_id, food_weight, history, user_id)
                 VALUES
-                    (%s, %s, %s, %s)
+                    (%s, %s, %s, %s, %s)
                 RETURNING
                     id;'''
-            values = (date_iso, food_catalogue_id, food_weight, user_id)
+            values = (date_iso, food_catalogue_id, food_weight, history, user_id)
             cursor.execute(sql, values)
             id = cursor.fetchone()
             connection.commit()
@@ -73,18 +73,38 @@ def db_add_diary_entry(date_iso: str, food_catalogue_id: int, food_weight: int, 
         return False
 
 
-def db_edit_diary_entry(food_weight: int, diary_id: int, user_id: int):
+def db_get_diary_entrys_history(diary_id: int, user_id: int):
+    try:
+        with connection.cursor(cursor_factory=DictCursor) as cursor:
+            sql = '''
+                SELECT 
+                    history
+                FROM
+                    food_diary
+                WHERE
+                    id=%s
+                    AND user_id=%s;'''
+            values = (diary_id, user_id)
+            cursor.execute(sql, values)
+            res = cursor.fetchone()
+        return res
+    except Exception as exc:
+        print(exc)
+        return False
+
+
+def db_edit_diary_entry(food_weight: int, history: str, diary_id: int, user_id: int):
     try:
         with connection.cursor() as cursor:
             sql = '''
                 UPDATE 
                     food_diary 
                 SET
-                    food_weight=%s
+                    food_weight=%s, history=%s
                 WHERE
                     id=%s
                     AND user_id=%s;'''
-            values = (food_weight, diary_id, user_id)
+            values = (food_weight, history, diary_id, user_id)
             cursor.execute(sql, values)
             connection.commit()
         return True

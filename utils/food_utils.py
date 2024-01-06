@@ -18,7 +18,7 @@ def get_cached_stats(background_tasks: BackgroundTasks, user_id, date_iso, coeff
 
     stats_date = res['up_to_date']
     if date_iso <= stats_date:
-        background_tasks.add_task(save_new_stats, user_id, date_iso, coefficients)  # for debug purposes
+        # background_tasks.add_task(save_new_stats, user_id, date_iso, coefficients)  # for debug purposes
         return json.loads(res['stats'])
 
     if date_iso > stats_date:
@@ -220,13 +220,16 @@ def dictify_weights_list(weights_list):
 def organize_by_dates_and_ids(inbound_list: list) -> dict:
     result_dict = {}
     for food in inbound_list:
-        # date = food['date']
         date = food['date'].strftime("%Y-%m-%d")
         id = food['id']
         if date not in result_dict:
             result_dict[date] = {}
-            result_dict[date] = {}
         result_dict[date][id] = food
+        try:
+            result_dict[date][id]['history'] = json.loads(food['history'])
+        except json.JSONDecodeError:
+            result_dict[date][id]['history'] = []
+
     return result_dict
 
 

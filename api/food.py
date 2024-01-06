@@ -58,7 +58,8 @@ def get_full_update(date_iso: str, background_tasks: BackgroundTasks, user_id=De
 
 @router.post('/diary/', tags=['Food -> Diary'])
 def new_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
-    res = db_add_diary_entry(diary_entry.date, diary_entry.food_catalogue_id, diary_entry.food_weight, user_id)
+    res = db_add_diary_entry(diary_entry.date, diary_entry.food_catalogue_id, diary_entry.food_weight,
+                             json.dumps([diary_entry.history[0].dict()]), user_id)
     if res:
         return {'result': True, 'value': res[0]}
     return {'result': False}
@@ -66,10 +67,13 @@ def new_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_w
 
 @router.put('/diary/', tags=['Food -> Diary'])
 def edit_diary_entry(diary_entry: DiaryEntry, user_id=Depends(auth_handler.auth_wrapper)):
-    res = db_edit_diary_entry(diary_entry.food_weight, diary_entry.id, user_id)
-    if res:
-        return {'result': True, 'value': diary_entry.id}
-    return {'result': False}
+    res_history = db_get_diary_entrys_history(diary_entry.id, user_id)
+    updated_history = json.loads(res_history[0]) if res_history else []
+    updated_history.append(diary_entry.history[0].dict())
+    res = db_edit_diary_entry(diary_entry.food_weight, json.dumps(updated_history), diary_entry.id, user_id)
+    if not res:
+        return {'result': False}
+    return {'result': True, 'value': diary_entry.id}
 
 
 @router.delete('/diary/{diary_entry_id}', tags=['Food -> Diary'])
