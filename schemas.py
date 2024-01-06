@@ -1,10 +1,41 @@
 from pydantic import BaseModel
 
+# class Stats(BaseModel):
+#     list()
+
 
 class UserLogin(BaseModel):
     email: str
     password: str
 
+
+# KCAL #
+
+class BodyWeight(BaseModel):
+    body_weight: float
+    date_iso: str
+
+
+class HistoryEntry(BaseModel):
+    action: str
+    value: int
+
+
+class DiaryEntry(BaseModel):
+    id: int | None
+    date: str
+    food_catalogue_id: int
+    food_weight: int
+    history: list[HistoryEntry]
+
+
+class CatalogueEntry(BaseModel):
+    id: int
+    name: str
+    kcals: int
+
+
+# MONEY #
 
 class Currency(BaseModel):
     title: str

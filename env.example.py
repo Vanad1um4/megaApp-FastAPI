@@ -11,4 +11,5 @@ APP_PORT = 8000
 
 PASS_SECRET = 'Secret phrase for password hashing'
 
-TRANSACTIONS_DAYS_AMT = 5  # The amount of days of transactions before and after the specified date to return
+# The amount of days of transactions before and after the specified date to return. Should be the same as in angular consts.
+FETCH_DAYS_RANGE_OFFSET = 5

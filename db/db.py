@@ -1,6 +1,8 @@
 import psycopg2
 
-from env import DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
+from psycopg2.extras import DictCursor
+
+from env import *
 
 
 def get_connection():
@@ -11,3 +13,17 @@ def get_connection():
         user=DB_USER,
         password=DB_PASS
     )
+
+
+def dictify_fetchall(cursor: DictCursor):
+    columns = [col[0] for col in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def dictify_fetchone(cursor: DictCursor):
+    columns = [col[0] for col in cursor.description]
+    row = cursor.fetchone()
+    if row is not None:
+        return dict(zip(columns, row))
+    else:
+        return None

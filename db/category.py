@@ -10,10 +10,15 @@ connection = get_connection()
 def db_get_category_list_by_user_id(user_id: int) -> list[dict[str, int | str]] | None | bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''SELECT id, title, kind
-                     FROM category
-                     WHERE user_id=%s
-                     ORDER BY title;'''
+            sql = '''
+                SELECT
+                    id, title, kind
+                FROM
+                    money_category
+                WHERE
+                    user_id=%s
+                ORDER BY
+                    title;'''
             values = (user_id,)
             cursor.execute(sql, values)
             res = cursor.fetchall()
@@ -32,8 +37,11 @@ def db_add_category(category: Category, user_id: int) -> bool:
     # pprint(category)
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''INSERT INTO category (title, kind, user_id)
-                     VALUES (%s, %s, %s);'''
+            sql = '''
+                INSERT INTO
+                    money_category (title, kind, user_id)
+                VALUES
+                    (%s, %s, %s);'''
             values = (category.title, category.kind, user_id)
             cursor.execute(sql, values)
             connection.commit()
@@ -46,9 +54,14 @@ def db_add_category(category: Category, user_id: int) -> bool:
 def db_update_category(category: Category, category_id: int, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''UPDATE category
-                     SET title=%s, kind=%s
-                     WHERE id=%s AND user_id=%s;'''
+            sql = '''
+                UPDATE
+                    money_category
+                SET
+                    title=%s, kind=%s
+                WHERE
+                    id=%s
+                    AND user_id=%s;'''
             values = (category.title, category.kind, category_id, user_id)
             cursor.execute(sql, values)
             connection.commit()
@@ -61,8 +74,12 @@ def db_update_category(category: Category, category_id: int, user_id: int) -> bo
 def db_delete_category(category_id: int, user_id: int) -> bool:
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            sql = '''DELETE FROM category
-                     WHERE id=%s AND user_id=%s;'''
+            sql = '''
+                DELETE FROM
+                    money_category
+                WHERE
+                    id=%s
+                    AND user_id=%s;'''
             values = (category_id, user_id)
             cursor.execute(sql, values)
             connection.commit()
