@@ -84,7 +84,7 @@ def make_ones_for_coefficients():
 
 
 def stats_recalc(user_id, date_iso, coefficients):
-    first_date = db_get_users_first_date(user_id)  # TODO[022]: what if no dates in db?
+    first_date = db_get_users_first_date(user_id) or datetime.now().date()
     all_dates = dates_list_prep(first_date, date_iso)
 
     weights_raw = db_get_all_users_body_weights(user_id)
