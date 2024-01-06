@@ -5,15 +5,15 @@ from db.db import get_connection
 connection = get_connection()
 
 
-def db_create_user(user_email, hashed_password):
+def db_create_user(username, hashed_password):
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
                 INSERT INTO
-                    "user" (email, hashed_password)
+                    users (username, hashed_password)
                 VALUES
                     (%s, %s);'''
-            values = (user_email, hashed_password)
+            values = (username, hashed_password)
             cursor.execute(sql, values)
             connection.commit()
             return True
@@ -22,17 +22,17 @@ def db_create_user(user_email, hashed_password):
         return False
 
 
-def db_get_user_id_by_email(user_email):
+def db_get_user_id_by_username(username):
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
                 SELECT
                     id
                 FROM
-                    "user"
+                    users
                 WHERE
-                    email=%s;'''
-            values = (user_email,)
+                    username=%s;'''
+            values = (username,)
             cursor.execute(sql, values)
             res = cursor.fetchone()
             return res
@@ -41,17 +41,17 @@ def db_get_user_id_by_email(user_email):
         return False
 
 
-def db_get_a_user_by_email(user_email):
+def db_get_a_user_by_username(username):
     try:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
             sql = '''
                 SELECT
                     *
                 FROM
-                    "user"
+                    users
                 WHERE
-                    email=%s;'''
-            values = (user_email,)
+                    username=%s;'''
+            values = (username,)
             cursor.execute(sql, values)
             res = cursor.fetchone()
             return dict(res) if res else None
