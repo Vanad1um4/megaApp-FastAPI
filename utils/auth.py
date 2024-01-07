@@ -4,7 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
-from env import PASS_SECRET
+from env import PASS_SECRET, SESSION_LENGTH_DAYS
 from db.user import db_get_user_id_by_username
 
 
@@ -21,7 +21,7 @@ class AuthHandler():
 
     def encode_token(self, user_id):
         payload = {
-            'exp': datetime.utcnow() + timedelta(days=1, minutes=0),
+            'exp': datetime.utcnow() + timedelta(days=SESSION_LENGTH_DAYS, minutes=0),
             'iat': datetime.utcnow(),
             'username': user_id
         }

@@ -13,3 +13,5 @@ PASS_SECRET = 'Secret phrase for password hashing'
 
 # The amount of days of transactions before and after the specified date to return. Should be the same as in angular consts.
 FETCH_DAYS_RANGE_OFFSET = 5
+
+SESSION_LENGTH_DAYS = 365
